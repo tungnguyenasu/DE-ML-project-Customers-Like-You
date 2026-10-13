@@ -27,3 +27,19 @@ cancellations) that is a zero cell in their row of the training matrix.
 
 Test customers with at least one held-out product: **1,903**
 (median 15 held-out products each, max 451).
+
+## Validation split (`validation/`)
+
+The same split, repeated inside the training period: a matrix from training lines before
+**2011-08-09 12:50:00**, and held-out pairs from then until the test cutoff. It is used to choose k and the
+scoring rule, so the test purchases are used once, for the final result (R2).
+
+|  | value |
+| --- | --- |
+| Matrix | 5,134 customers x 3,486 products, 371,275 non-zeros |
+| Customer-product pairs bought in the test period | 62,739 |
+| Customer not in the training matrix (cold start) | -10,250 |
+| Product not in the kept catalogue | -5,402 |
+| Customer already bought it in training (repeat) | -22,885 |
+| Held-out pairs | 24,202 |
+| Validation customers with a held-out product | 1,397 |

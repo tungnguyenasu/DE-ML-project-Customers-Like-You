@@ -181,6 +181,25 @@ def hold_out(test, test_cancels, customers, products, train_pairs):
     }), funnel
 
 
+def split_build(purchases, cancels, cutoff, min_customers):
+    """DE3 and DE4 for one cutoff: the matrix from lines before it, held-out pairs from lines after (R2)."""
+    after, cancel_after = purchases["InvoiceDate"] >= cutoff, cancels["InvoiceDate"] >= cutoff
+    before = purchases[~after]
+    matrices, customer_map, product_map, pairs, steps = build(before, cancels[~cancel_after], min_customers)
+    held_out, funnel = hold_out(purchases[after], cancels[cancel_after], pd.Index(customer_map["Customer ID"]),
+                                pd.Index(product_map["StockCode"]), pairs)
+    return before, purchases[after], matrices, customer_map, product_map, held_out, steps, funnel
+
+
+def save(out, matrices, customer_map, product_map, held_out):
+    out.mkdir(parents=True, exist_ok=True)
+    for name, A in matrices.items():
+        sp.save_npz(out / f"matrix_{name}.npz", A)
+    customer_map.to_csv(out / "customer_index.csv", index=False)
+    product_map.to_csv(out / "product_index.csv", index=False)
+    held_out.to_csv(out / "test_holdout.csv", index=False)
+
+
 def matrix_size(A):
     """DE5: shape, sparsity and memory of the full matrix against stored factors."""
     n_c, n_p = A.shape
@@ -214,23 +233,23 @@ def main():
     print("DE2 cleaning")
     purchases, cancels, log = clean(sheets)
 
-    print("DE3 splitting by time")
-    cutoff = purchases["InvoiceDate"].max() - pd.DateOffset(months=args.test_months)
-    is_test, cancel_is_test = purchases["InvoiceDate"] >= cutoff, cancels["InvoiceDate"] >= cutoff
-    train, test = purchases[~is_test], purchases[is_test]
-
-    print("DE4 building the matrix")
-    matrices, customer_map, product_map, train_pairs, steps = build(train, cancels[~cancel_is_test], args.min_customers)
-    customers, products = pd.Index(customer_map["Customer ID"]), pd.Index(product_map["StockCode"])
-    held_out, funnel = hold_out(test, cancels[cancel_is_test], customers, products, train_pairs)
-
-    for name, A in matrices.items():
-        sp.save_npz(out / f"matrix_{name}.npz", A)
-    customer_map.to_csv(out / "customer_index.csv", index=False)
-    product_map.to_csv(out / "product_index.csv", index=False)
+    print("DE3 splitting by time, DE4 building the matrix")
+    period = pd.DateOffset(months=args.test_months)
+    cutoff = purchases["InvoiceDate"].max() - period
+    train, test, matrices, customer_map, product_map, held_out, steps, funnel = split_build(
+        purchases, cancels, cutoff, args.min_customers)
+    save(out, matrices, customer_map, product_map, held_out)
     train.to_parquet(out / "train_lines.parquet", index=False)
     test.to_parquet(out / "test_lines.parquet", index=False)
-    held_out.to_csv(out / "test_holdout.csv", index=False)
+
+    # The same split repeated inside the training period, so k and the scoring rule
+    # can be chosen without looking at the test purchases (R2).
+    print("    and a validation split inside the training period")
+    val_cutoff = cutoff - period
+    _, _, val_matrices, val_customers, val_products, val_held_out, _, val_funnel = split_build(
+        train, cancels[cancels["InvoiceDate"] < cutoff], val_cutoff, args.min_customers)
+    save(out / "validation", val_matrices, val_customers, val_products, val_held_out)
+    val_A = val_matrices["log1p"]
 
     print("DE5 writing reports")
     size = matrix_size(matrices["log1p"])
@@ -296,6 +315,19 @@ cancellations) that is a zero cell in their row of the training matrix.
 
 Test customers with at least one held-out product: **{n(len(per_customer))}**
 (median {per_customer.median():.0f} held-out products each, max {n(int(per_customer.max()))}).
+
+## Validation split (`validation/`)
+
+The same split, repeated inside the training period: a matrix from training lines before
+**{val_cutoff}**, and held-out pairs from then until the test cutoff. It is used to choose k and the
+scoring rule, so the test purchases are used once, for the final result (R2).
+
+{md_table([
+        {"": "Matrix", "value": f"{n(val_A.shape[0])} customers x {n(val_A.shape[1])} products, "
+                                f"{n(val_A.nnz)} non-zeros"},
+        *({"": s, "value": n(c)} for s, c in val_funnel),
+        {"": "Validation customers with a held-out product", "value": n(val_held_out["customer_idx"].nunique())},
+    ])}
 """, encoding="utf-8")
 
     (reports / "matrix_report.md").write_text(f"""# Matrix report (DE4, DE5)
@@ -339,12 +371,17 @@ MB = 10^6 bytes. Build time for the whole pipeline: {seconds:.0f} seconds.
         "clean_purchase_lines": len(purchases), "cancellation_lines": len(cancels),
         "cutoff": str(cutoff), "train_lines": len(train), "test_lines": len(test),
         "matrix_steps": dict(steps), "holdout_funnel": dict(funnel),
-        "holdout_customers": len(per_customer), "matrix": size, "seconds": round(seconds, 1),
+        "holdout_customers": len(per_customer), "matrix": size,
+        "validation": {"cutoff": str(val_cutoff), "shape": list(val_A.shape), "nonzeros": int(val_A.nnz),
+                       "holdout_funnel": dict(val_funnel),
+                       "holdout_customers": int(val_held_out["customer_idx"].nunique())},
+        "seconds": round(seconds, 1),
         "settings": {"test_months": args.test_months, "min_customers": args.min_customers},
     }, indent=2), encoding="utf-8")
 
     print(f"done in {seconds:.0f}s: {n(size['customers'])} x {n(size['products'])} matrix, "
-          f"{n(size['nonzeros'])} non-zeros, {n(len(held_out))} held-out pairs for {n(len(per_customer))} customers")
+          f"{n(size['nonzeros'])} non-zeros, {n(len(held_out))} held-out pairs for {n(len(per_customer))} customers; "
+          f"validation {n(val_A.shape[0])} x {n(val_A.shape[1])}, {n(len(val_held_out))} held-out pairs")
 
 
 if __name__ == "__main__":

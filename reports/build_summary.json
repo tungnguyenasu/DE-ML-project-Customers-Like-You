@@ -82,7 +82,23 @@
       "200": 14.6176
     }
   },
-  "seconds": 55.5,
+  "validation": {
+    "cutoff": "2011-08-09 12:50:00",
+    "shape": [
+      5134,
+      3486
+    ],
+    "nonzeros": 371275,
+    "holdout_funnel": {
+      "Customer-product pairs bought in the test period": 62739,
+      "Customer not in the training matrix (cold start)": -10250,
+      "Product not in the kept catalogue": -5402,
+      "Customer already bought it in training (repeat)": -22885,
+      "Held-out pairs": 24202
+    },
+    "holdout_customers": 1397
+  },
+  "seconds": 54.7,
   "settings": {
     "test_months": 2,
     "min_customers": 10
