@@ -1,0 +1,9 @@
+# Raw and derived data are never committed (Step 0). data/processed also holds
+# files keyed by customer ID, which must not leave the team (R4).
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
