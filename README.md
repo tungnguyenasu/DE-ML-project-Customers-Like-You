@@ -2,6 +2,36 @@
 
 PCA / SVD mini-project (DS 5020) on the UCI Online Retail II transaction log.
 
+**Team:** Tung Nguyen, Data Engineer and ML Engineer (individual project).
+
+## Success targets (J1)
+
+Sarah Okafor's request, turned into numbers we can check. A target is met only if every rule
+below the table also holds.
+
+| # | Sarah asked for | Target | How it is measured | Status |
+| --- | --- | --- | --- | --- |
+| 1 | "Shrink the data" | The stored factors are **at least 10x smaller** than the full customer x product table (160.6 MB) | Size of customer + product factors in MB, 8-byte floats | Met for every k tried: 0.7 MB (k = 10) to 14.6 MB (k = 200) |
+| 2 | "The job runs nightly" | The nightly job runs in **under 1 minute** on a laptop: fit, "also bought" lists for every product, top 10 for every customer | Wall-clock time of the whole job | On track: fit 0.2 s and scoring 0.3 s at k = 50. The full job is timed in ML4 |
+| 3 | "Better than just showing our best sellers" | Hit rate at 10 **at least 3 percentage points above** the best-seller baseline | Held-out purchases (last 2 months, products new to the customer), measured once after k and the scoring rule are fixed on a validation split | Open (ML2 to ML4). The Section 3 comparison found the brief's cosine rule 5.7 points *below* the baseline and the rebuilt-row rule 10.2 points above |
+| 4 | "One simple picture of our main customer groups" | **3 to 6 groups** on a 2-component map, each with **at least 5% of customers** and a name taken from its top products and countries; no two groups share more than half of their top-10 products | Group sizes and top-10 product overlap from the clustering | Open (ML6). Component 1 is overall buying, so the map may split big shops from small ones first |
+
+Why these thresholds:
+
+- **Target 1** is measured against the table the old prototype builds. The sparse purchase matrix
+  is already only 5.0 MB, so it is not the size problem Sarah describes.
+- **Target 3** needs more than a win. With 1,903 test customers, a hit rate moves by about
+  1 point from chance alone, so 3 points is a real improvement.
+- **Target 4** requires little overlap so that each group gets its own campaign: two groups that
+  buy the same products are one audience, not two.
+
+Rules for every target:
+
+- No test purchase is used by any fitting or tuning step (R2).
+- No customer IDs appear in the memo, slides, figures or reports (R4).
+- `python build_matrix.py` rebuilds everything from the raw file with the same output every
+  time, and all seeds are fixed (R6).
+
 ## Data
 
 Online Retail II, UCI Machine Learning Repository (Chen, 2012,
