@@ -1,0 +1,90 @@
+{
+  "built": "2026-10-12",
+  "raw_rows": 1067371,
+  "cleaning": [
+    {
+      "rule": "Line repeated in the next year's sheet (1-9 Dec 2010)",
+      "rows removed": 22523,
+      "rows left": 1044848,
+      "flagged on raw file": 22523
+    },
+    {
+      "rule": "Cancellation (invoice starts with C), set aside for netting",
+      "rows removed": 19165,
+      "rows left": 1025683,
+      "flagged on raw file": 19494
+    },
+    {
+      "rule": "Quantity <= 0 (returns and stock adjustments)",
+      "rows removed": 3393,
+      "rows left": 1022290,
+      "flagged on raw file": 22950
+    },
+    {
+      "rule": "Price <= 0 (free, test and bad-debt lines)",
+      "rows removed": 2636,
+      "rows left": 1019654,
+      "flagged on raw file": 6207
+    },
+    {
+      "rule": "Not a product (POST, M, D, BANK CHARGES, gift vouchers, ...)",
+      "rows removed": 4709,
+      "rows left": 1014945,
+      "flagged on raw file": 6093
+    },
+    {
+      "rule": "Missing Customer ID",
+      "rows removed": 226758,
+      "rows left": 788187,
+      "flagged on raw file": 243007
+    },
+    {
+      "rule": "Exact duplicate of another line",
+      "rows removed": 11610,
+      "rows left": 776577,
+      "flagged on raw file": 34335
+    }
+  ],
+  "clean_purchase_lines": 776577,
+  "cancellation_lines": 17586,
+  "cutoff": "2011-10-09 12:50:00",
+  "train_lines": 660194,
+  "test_lines": 116383,
+  "matrix_steps": {
+    "Customer-product pairs bought in training": 417719,
+    "... of which had units cancelled later in training": 12286,
+    "... of which were fully cancelled (dropped)": 2784,
+    "Products with at least one buyer": 4519,
+    "Products kept (bought by >= 10 customers)": 3680,
+    "Customers with at least one purchase": 5457,
+    "Customers kept (bought at least one kept product)": 5456
+  },
+  "holdout_funnel": {
+    "Customer-product pairs bought in the test period": 94562,
+    "Customer not in the training matrix (cold start)": -13735,
+    "Product not in the kept catalogue": -4698,
+    "Customer already bought it in training (repeat)": -31577,
+    "Held-out pairs": 44552
+  },
+  "holdout_customers": 1903,
+  "matrix": {
+    "customers": 5456,
+    "products": 3680,
+    "nonzeros": 411136,
+    "sparsity": 0.979523141654979,
+    "dense_mb": 160.62464,
+    "sparse_csr_mb": 4.95546,
+    "factors_mb": {
+      "10": 0.73088,
+      "20": 1.46176,
+      "50": 3.6544,
+      "100": 7.3088,
+      "200": 14.6176
+    }
+  },
+  "seconds": 55.5,
+  "settings": {
+    "test_months": 2,
+    "min_customers": 10
+  }
+}
