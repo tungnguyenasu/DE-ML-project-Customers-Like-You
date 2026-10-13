@@ -53,7 +53,7 @@ Rules for every target:
 | Slides (J3) | [slides.pptx](slides.pptx), with speaker notes |
 | Contribution log (C2) | [contribution_log.md](contribution_log.md) |
 | Peer evaluation (C3) | Not applicable: individual project, peer factor 1.00 |
-| Individual reflection | Submitted separately |
+| Individual reflection | [reflection.md](reflection.md) |
 
 ## Data
 
