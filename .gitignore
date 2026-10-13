@@ -2,6 +2,15 @@
 # files keyed by customer ID, which must not leave the team (R4).
 data/
 
+# Draft for the user to rewrite in their own words before submitting
+reflection_DRAFT.md
+
+# Node (slides/)
+node_modules/
+
+# Office lock files while a deck or document is open
+~$*
+
 # Python
 .venv/
 __pycache__/

@@ -1,0 +1,11 @@
+{
+  "name": "customers-like-you-slides",
+  "private": true,
+  "description": "Builds slides.pptx (J3) from the numbers in ../reports",
+  "scripts": {
+    "build": "node make_slides.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "3.12.0"
+  }
+}

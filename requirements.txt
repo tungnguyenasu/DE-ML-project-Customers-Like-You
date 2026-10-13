@@ -7,3 +7,4 @@ openpyxl==3.1.5
 pyarrow==26.0.0
 matplotlib==3.11.2
 jupyter==1.1.1
+reportlab==5.0.1
