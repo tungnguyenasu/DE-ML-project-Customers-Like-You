@@ -1,0 +1,4 @@
+# Generated documents and images: never convert line endings inside them
+*.pdf binary
+*.pptx binary
+*.png binary
