@@ -47,6 +47,20 @@ Current build: 5,456 customers x 3,680 products, 411,136 non-zeros (97.95% spars
 160.6 MB dense against 5.0 MB sparse. The test period starts 2011-10-09, with 44,552
 held-out purchases for 1,903 customers.
 
+## Analysis
+
+```bash
+jupyter nbconvert --to notebook --execute --inplace analysis.ipynb   # or open it and Run All
+```
+
+| File | Contents |
+| --- | --- |
+| `method_decision.md` | ML1: PCA or SVD, decided and justified before fitting |
+| `analysis.ipynb` | Section 3: PCA vs SVD on the same matrix and k (ML5) |
+| `recommender.py` | shared model code: fit, compression loss, recommend, hit rate, timing |
+| `reports/pca_vs_svd.md` | the filled ML5 comparison table, findings, ML1 predictions checked |
+| `figures/` | figures written by the notebook (no customer IDs) |
+
 ### Loading the matrix
 
 ```python

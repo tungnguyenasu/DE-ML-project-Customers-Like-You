@@ -96,3 +96,32 @@ too. The ML Engineer can still filter customers for the customer map.
 **D14. Customer IDs stay in `data/processed/`, which is not committed.**
 The reports, figures and `test_holdout.csv` use row indices (`customer_idx`). Only
 `customer_index.csv` maps an index back to an ID (R4).
+
+## Modelling (ML1, ML5, see [pca_vs_svd.md](reports/pca_vs_svd.md))
+
+**M1. Truncated SVD is the main model.**
+The reasons are in [method_decision.md](method_decision.md), written before anything was
+fitted. In the comparison, PCA's best hit-rate lead was 0.6 points, under the 1-point bar set
+in advance, so the decision stands.
+
+**M2. Both methods use the ARPACK solver with seed 42.**
+With the same solver, any difference comes from centring alone. ARPACK is also exact. On this
+matrix it fitted faster than scikit-learn's default randomized solver and gave a slightly lower
+error (0.7883 vs 0.7889 at k = 50).
+
+**M3. PCA runs on the sparse matrix with implicit centring.**
+Centring explicitly gives the same model but peaks at 490 MB, against 8 MB.
+
+**M4. Best-seller baseline: the 10 products with the most distinct training buyers that the customer has not bought.**
+Counting buyers rather than units stops a few bulk wholesale orders from deciding what
+"best-selling" means. The box should reflect how many shops buy a product.
+
+**M5. k = 50 for the comparison, for now.**
+This is the brief's example value. The final k is chosen in ML2. k is one parameter at the top of
+the notebook.
+
+**M6. The scoring rule is left for ML3.**
+The comparison reports two rules: ML3's cosine rule (21% hit rate, below the baseline's 27%) and
+the rebuilt-row rule (37%). Centring affects them differently. The rule that ships must be chosen
+on a validation split cut from the training period. Choosing it on the test purchases would let
+them shape a model decision (R2).
