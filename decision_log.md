@@ -43,6 +43,9 @@ lines has a customer ID, and SP1002 has 2 buyers, below the product filter anywa
 The 173 lower-case codes (for example 15056bl) carry the same descriptions as their upper-case
 codes, so they are merged. Letter variants (85123A and 85123B) stay separate, because they
 are different colours or designs that a customer chooses between.
+Known leftover: one delivery charge has a five-digit code, 23444 "Next Day Carriage", bought by
+29 customers. It is 1 of 3,680 columns, and it appears in none of the "also bought" or customer
+top-10 lists, so the frozen matrix keeps it. A future rebuild should add it to the rule.
 
 **D7. Remove lines without a Customer ID.**
 These lines cannot be placed in a customer row. They make up 22.8% of the raw lines and
@@ -82,6 +85,8 @@ cells. A 1/0 flag throws away the difference between a shop that bought 2 and on
 bought 2,000. log1p keeps the order but compresses the tail: 6 units becomes 1.9, and
 25,164 becomes 10.1. The 1/0 and raw-unit versions are saved with the same cells for the
 ML7 sensitivity check.
+Update: the validation split (M8) showed the 1/0 version predicts new purchases better, so the
+recommender uses it (M9). log(1 + units) stays the default matrix the build reports on.
 
 **D12. Keep products bought by at least 10 different customers in training.**
 With fewer buyers there is too little co-purchase signal for a reliable similarity, and a
@@ -101,8 +106,8 @@ The reports, figures and `test_holdout.csv` use row indices (`customer_idx`). On
 
 **M1. Truncated SVD is the main model.**
 The reasons are in [method_decision.md](method_decision.md), written before anything was
-fitted. In the comparison, PCA's best hit-rate lead was 0.6 points, under the 1-point bar set
-in advance, so the decision stands.
+fitted. PCA's best hit-rate lead was 0.6 points in the first comparison (k = 50) and 0.3 points at the
+final settings, both under the 1-point bar set in advance, so the decision stands.
 
 **M2. Both methods use the ARPACK solver with seed 42.**
 With the same solver, any difference comes from centring alone. ARPACK is also exact. On this
@@ -116,12 +121,47 @@ Centring explicitly gives the same model but peaks at 490 MB, against 8 MB.
 Counting buyers rather than units stops a few bulk wholesale orders from deciding what
 "best-selling" means. The box should reflect how many shops buy a product.
 
-**M5. k = 50 for the comparison, for now.**
-This is the brief's example value. The final k is chosen in ML2. k is one parameter at the top of
-the notebook.
+**M5. k = 50 for the first comparison only.**
+This was the brief's example value, used before k was chosen. The final comparison in
+[pca_vs_svd.md](reports/pca_vs_svd.md) is re-run at the chosen settings (M10) and reaches the same
+conclusions.
 
-**M6. The scoring rule is left for ML3.**
-The comparison reports two rules: ML3's cosine rule (21% hit rate, below the baseline's 27%) and
-the rebuilt-row rule (37%). Centring affects them differently. The rule that ships must be chosen
-on a validation split cut from the training period. Choosing it on the test purchases would let
-them shape a model decision (R2).
+**M6. The scoring rule is chosen on validation, not on the test.**
+The first comparison reported two rules on the test purchases: ML3's cosine rule (21% hit rate, below
+the baseline's 27%) and the rebuilt-row rule (37%). Choosing between them there would let the test
+purchases shape a model decision (R2), so the choice is made on the validation split (M8).
+
+**M7. The scikit-learn version of k-means is replaced by SciPy's.**
+On this laptop, an application-control policy blocks one of scikit-learn's compiled files, so
+`sklearn.cluster` will not import. `recommender.kmeans` runs SciPy's k-means++ with 10 seeded
+restarts and keeps the run with the lowest within-group sum of squares, which is what
+`KMeans(n_init=10)` does.
+
+**M8. A validation split repeats the test split inside the training period.**
+`build_matrix.py` cuts the training lines at 9 Aug 2011 and holds out new-product purchases from then
+until the test cutoff (24,202 pairs, 1,397 customers). The main matrix and test files are unchanged,
+byte for byte. Its risk: validation is late summer, the test is the pre-Christmas peak.
+
+**M9. The model uses the 1/0 matrix, the rebuilt-row rule and k = 70, all chosen on validation.**
+Validation hit rates for 3 purchase values x 8 values of k x 2 rules are in
+[validation_sweep.csv](reports/validation_sweep.csv). The 1/0 matrix with the rebuilt-row rule was
+best (42.4% at k = 70, against a 25.6% baseline). log(1 + units) peaked at 39.7% and raw units at 25.0%.
+The cosine rule never beat best sellers. A plain "bought it" flag carries more signal for a shop's
+next new product than how many units it bought.
+
+**M10. k = 70: the smallest k within 1 point of the best validation hit rate.**
+The rule was fixed before looking. One point is about one standard error of a validation hit rate.
+The grid was the brief's five values plus 30, 70 and 150. The reconstruction error falls smoothly
+with no elbow, so it cannot choose k on its own.
+
+**M11. The test purchases are scored once, after M9 and M10.**
+The final result: 40.4% against 26.9% for best sellers, +13.5 points with a 95% bootstrap interval of
++10.9 to +16.1 (2,000 resamples of the 1,903 test customers, seed 42).
+
+**M12. The customer map uses component 1 (log scale) and component 2 divided by component 1.**
+Component 1 is overall buying, so the raw components 1 and 2 mostly sort shops by size. Dividing
+component 2 by component 1 gives taste regardless of size: home decoration against children's items.
+k-means on the two standardised coordinates, for 3 to 6 groups, chose 4 groups: the highest
+silhouette among the solutions that meet success target 4. Groups are described by their top-10
+products by lift, among the 50 products each group buys most. Names follow rules written next to the
+profiles in the notebook. They use SVD, the main model; PCA gives the same components (M1).

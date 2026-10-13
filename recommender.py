@@ -1,4 +1,4 @@
-"""Shared model code: fit SVD or PCA, recommend products, evaluate (ML2 to ML5).
+"""Shared model code: fit SVD or PCA, recommend, evaluate, segment (ML2 to ML7).
 
 The analysis notebook and the nightly job both import from here, so every
 number in the PCA vs SVD comparison and the evaluation comes from the same
@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
+from scipy.cluster.vq import kmeans2
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.preprocessing import normalize
 
@@ -64,9 +65,13 @@ def _top(scores, n):
     return np.take_along_axis(best, order, axis=1)
 
 
-def similar_products(product_factors, n=10):
-    """ML3: for every product, the n most similar products by cosine of their factor vectors."""
-    P = normalize(product_factors)
+def similar_products(product_factors, n=10, cosine=True):
+    """ML3: for every product, the n most similar products by their factor vectors.
+
+    cosine=True is the brief's rule. cosine=False uses dot products, which is what the
+    rebuilt-row rule recommends to someone who has bought only that product.
+    """
+    P = normalize(product_factors) if cosine else product_factors
     S = P @ P.T
     np.fill_diagonal(S, -np.inf)
     return _top(S, n)
@@ -107,15 +112,48 @@ def recommend(A, score, customers=None, n=10, batch=1000):
     return top
 
 
-def hit_rate(top, customers, holdout):
-    """Share of test customers with at least one held-out product in their top-n.
+def customer_hits(top, customers, holdout):
+    """For each customer in `customers`: is at least one held-out product in their top-n?
 
     top[i] holds the recommendations for customer customers[i].
     """
     position = pd.Series(np.arange(len(customers)), index=customers)
     recs = top[position[holdout["customer_idx"]].to_numpy()]
     hit = (recs == holdout["product_idx"].to_numpy()[:, None]).any(axis=1)
-    return pd.Series(hit).groupby(holdout["customer_idx"].to_numpy()).any().mean()
+    return pd.Series(hit).groupby(holdout["customer_idx"].to_numpy()).any().reindex(customers).to_numpy()
+
+
+def hit_rate(top, customers, holdout):
+    """Share of test customers with at least one held-out product in their top-n."""
+    return customer_hits(top, customers, holdout).mean()
+
+
+def bootstrap_difference(hits_a, hits_b, n_boot=2000, seed=SEED):
+    """95% interval for hit rate a minus hit rate b, resampling the same customers for both."""
+    rows = np.random.default_rng(seed).integers(0, len(hits_a), size=(n_boot, len(hits_a)))
+    return np.percentile(hits_a[rows].mean(axis=1) - hits_b[rows].mean(axis=1), [2.5, 97.5])
+
+
+def nightly_job(A, k, n=10, cosine=False):
+    """The nightly job: fit SVD, the "also bought" list for every product, the top n for every customer."""
+    model = fit("svd", A, k)
+    score = similarity_scorer(model.components_.T) if cosine else reconstruction_scorer(model)
+    return model, similar_products(model.components_.T, n, cosine), recommend(A, score, n=n)
+
+
+def kmeans(X, n_groups, n_init=10, seed=SEED):
+    """k-means++ with n_init restarts, keeping the run with the lowest within-group sum of squares.
+
+    Uses SciPy because scikit-learn's cluster module fails to import where an
+    application-control policy blocks one of scikit-learn's compiled files.
+    """
+    best = None
+    for run in range(n_init):
+        centres, labels = kmeans2(X, n_groups, minit="++", seed=seed + run)
+        inertia = ((X - centres[labels]) ** 2).sum()
+        if best is None or inertia < best[0]:
+            best = (inertia, labels)
+    return best[1]
 
 
 def measure(fn, repeats=3):

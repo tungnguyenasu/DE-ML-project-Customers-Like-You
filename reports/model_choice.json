@@ -1,0 +1,11 @@
+{
+  "value": "binary",
+  "k": 70,
+  "rule": "rebuilt row",
+  "validation_hit_rate": 0.42448103078024335,
+  "validation_best": {
+    "k": 70,
+    "hit_rate": 0.42448103078024335
+  },
+  "validation_baseline": 0.25554760200429494
+}

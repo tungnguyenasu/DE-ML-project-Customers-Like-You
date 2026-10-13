@@ -1,0 +1,167 @@
+{
+  "model": {
+    "method": "Truncated SVD",
+    "value": "binary",
+    "value_label": "1/0 bought",
+    "k": 70,
+    "rule": "rebuilt row"
+  },
+  "validation": {
+    "value": "binary",
+    "k": 70,
+    "rule": "rebuilt row",
+    "validation_hit_rate": 0.42448103078024335,
+    "validation_best": {
+      "k": 70,
+      "hit_rate": 0.42448103078024335
+    },
+    "validation_baseline": 0.25554760200429494
+  },
+  "test": {
+    "customers": 1903,
+    "held_out_pairs": 44552,
+    "hit_rate": 0.40409879138202837,
+    "baseline": 0.26904887020493956,
+    "gain_points": 13.50499211770888,
+    "gain_interval_points": [
+      10.877561744613768,
+      16.132422490803993
+    ],
+    "cosine_rule_hit_rate": 0.24540199684708355
+  },
+  "size": {
+    "factors_mb": 5.11616,
+    "dense_mb": 160.62464,
+    "times_smaller": 31.395546659995,
+    "relative_error": 0.8091014288502109,
+    "share_kept": 0.3453548778325471
+  },
+  "job": {
+    "seconds": 0.6619941999670118,
+    "peak_mb": 327.117948
+  },
+  "coverage": {
+    "products suggested to at least one customer": "1,083 of 3,680",
+    "share of all suggestion slots taken by the 10 best sellers": "5.9%",
+    "customers whose top 10 is exactly the best-seller list": "0.0%"
+  },
+  "pca": {
+    "hit_rate": 0.40620073568050447,
+    "variance_explained": 0.3132273431858433,
+    "dense_centring_peak_mb": 492.593429
+  },
+  "comparison": {
+    "svd": {
+      "fit_seconds": 0.29231619997881353,
+      "peak_mb": 15.64579,
+      "factors_mb": 5.11616,
+      "relative_error": 0.8091014288502109,
+      "hit_rate": 0.40409879138202837
+    },
+    "pca": {
+      "fit_seconds": 0.2668173999991268,
+      "peak_mb": 10.752021,
+      "factors_mb": 5.1456,
+      "relative_error": 0.8089794532337199,
+      "hit_rate": 0.40620073568050447
+    },
+    "average_share": 0.04706783349497211,
+    "list_overlap": 0.9582608695652175,
+    "dense_centring_peak_mb": 492.593429
+  },
+  "also_bought_example": {
+    "product": "White Hanging Heart T-Light Holder",
+    "list": [
+      "Red Hanging Heart T-Light Holder",
+      "Candleholder Pink Hanging Heart",
+      "Zinc Metal Heart Decoration",
+      "Cream Heart Card Holder",
+      "Natural Slate Heart Chalkboard",
+      "Colour Glass. Star T-Light Holder",
+      "Hanging Metal Heart Lantern",
+      "White Metal Lantern",
+      "Rex Cash+Carry Jumbo Shopper",
+      "Gingham Heart  Doorstop Red"
+    ]
+  },
+  "segments": [
+    {
+      "name": "Big regular wholesalers",
+      "share": 0.3346774193548387,
+      "median_products": 122.0,
+      "median_orders": 7.0,
+      "median_spend_gbp": 2339.23,
+      "overseas": 0.0755750273822563,
+      "top_overseas": "Germany, France, Switzerland",
+      "distinctive": [
+        "72 Sweetheart Fairy Cake Cases",
+        "Jumbo Shopper Vintage Red Paisley",
+        "Jam Making Set Printed",
+        "Lunch Bag Pink Polkadot",
+        "Jumbo Bag Pink Polkadot"
+      ]
+    },
+    {
+      "name": "Home-decor shops",
+      "share": 0.30186950146627567,
+      "median_products": 30.0,
+      "median_orders": 2.0,
+      "median_spend_gbp": 599.76,
+      "overseas": 0.03460837887067392,
+      "top_overseas": "France, Spain, Cyprus",
+      "distinctive": [
+        "Wood Black Board Ant White Finish",
+        "White Hanging Heart T-Light Holder",
+        "Wooden Frame Antique White",
+        "Painted Metal Pears Assorted",
+        "Heart Ivory Trellis Large"
+      ]
+    },
+    {
+      "name": "Children's gift shops",
+      "share": 0.26392961876832843,
+      "median_products": 27.0,
+      "median_orders": 2.0,
+      "median_spend_gbp": 462.225,
+      "overseas": 0.18333333333333335,
+      "top_overseas": "France, Germany, Belgium",
+      "distinctive": [
+        "Red Toadstool Led Night Light",
+        "Mini Paint Set Vintage",
+        "Baking Set Spaceboy Design",
+        "Round Snack Boxes Set Of4 Woodland",
+        "Woodland Charlotte Bag"
+      ]
+    },
+    {
+      "name": "One-off small buyers",
+      "share": 0.09952346041055718,
+      "median_products": 5.0,
+      "median_orders": 1.0,
+      "median_spend_gbp": 180.56,
+      "overseas": 0.025782688766114226,
+      "top_overseas": "Belgium, Spain, Germany",
+      "distinctive": [
+        "Small Chinese Style Scissor",
+        "Large Chinese Style Scissor",
+        "Sandalwood Fan",
+        "Antique Silver Tea Glass Engraved",
+        "Set/4 White Retro Storage Cubes"
+      ]
+    }
+  ],
+  "sensitivity": {
+    "log(1 + units)": {
+      "validation hit rate": 0.38869005010737295,
+      "test hit rate": 0.3762480294272202
+    },
+    "1/0 bought": {
+      "validation hit rate": 0.42448103078024335,
+      "test hit rate": 0.40409879138202837
+    },
+    "units": {
+      "validation hit rate": 0.23622047244094488,
+      "test hit rate": 0.22438255386232264
+    }
+  }
+}
